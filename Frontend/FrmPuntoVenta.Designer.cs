@@ -37,7 +37,7 @@
             ClientSize = new Size(872, 516);
             Name = "FrmPuntoVenta";
             Text = "Form1";
-            Load += FrmPuntoVenta_Load;
+            //Load += FrmPuntoVenta_Load;
             ResumeLayout(false);
         }
 
