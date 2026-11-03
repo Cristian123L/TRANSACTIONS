@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using Guna.UI2.WinForms;
 using Entities;
-using DataBase;
+using Backend;
 
 namespace Frontend
 {
@@ -19,7 +20,7 @@ namespace Frontend
         private Guna2Button? btnGuardarVenta;
 
         // Lógica de negocio y estado
-        private VentaRepository repository;
+        private VentaService ventaService;
         private List<Producto> listaDetalles;
         private decimal subtotalVenta = 0m;
         private decimal ivaVenta = 0m;
@@ -28,7 +29,7 @@ namespace Frontend
         public FrmPuntoVenta()
         {
             InitializeComponent();
-            repository = new VentaRepository();
+            ventaService = new VentaService();
             listaDetalles = new List<Producto>();
             CrearInterfazProgramaticamente();
         }
@@ -117,7 +118,7 @@ namespace Frontend
             try
             {
                 // Ejecuta la transacción en la base de datos
-                repository.GuardarVentaConTransaccion(subtotalVenta, ivaVenta, totalVenta, listaDetalles);
+                ventaService.ProcesarVenta(subtotalVenta, ivaVenta, totalVenta, listaDetalles);
 
                 MessageBox.Show("Venta guardada y stock actualizado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -133,12 +134,24 @@ namespace Frontend
 
         private void AgregarProducto(string codigo)
         {
-            // Busca en la base de datos a través de la capa DataBase
-            Producto? prod = repository.BuscarProductoPorCodigo(codigo);
+            // 1. Verificar si el producto ya está en la lista actual del GRID
+            Producto? prodExistente = listaDetalles.FirstOrDefault(p => p.Clave == codigo);
 
-            if (prod != null)
+            if (prodExistente != null)
             {
-                listaDetalles.Add(prod);
+                // Si ya existe, sumamos 1 a la cantidad y recalculamos el importe
+                prodExistente.Cantidad += 1;
+                prodExistente.Importe = prodExistente.Precio * prodExistente.Cantidad;
+                ActualizarGridYTotales();
+                return;
+            }
+
+            // 2. Si no está en la lista, lo buscamos en la base de datos a través del Backend
+            Producto? prodNuevo = ventaService.ObtenerProducto(codigo);
+
+            if (prodNuevo != null)
+            {
+                listaDetalles.Add(prodNuevo);
                 ActualizarGridYTotales();
             }
             else
@@ -171,6 +184,11 @@ namespace Frontend
             lblSubtotal.Text = $"Subtotal: {subtotalVenta:C}";
             lblIva.Text = $"IVA (16%): {ivaVenta:C}";
             lblTotal.Text = $"Total: {totalVenta:C}";
+        }
+
+        private void FrmPuntoVenta_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

@@ -7,7 +7,7 @@ namespace DataBase
 {
     public class VentaRepository
     {
-        private string connectionString = "Server=localhost;Database=POS_Local;Uid=root;Pwd=root123;";
+        private string connectionString = "Server=localhost;Database=POS_Local;Uid=root;Pwd=Santy.006   ;";
 
         public Producto? BuscarProductoPorCodigo(string clave)
         {
